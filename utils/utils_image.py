@@ -657,6 +657,19 @@ def calculate_ssim(img1, img2, border=0):
     img1 = img1[border:h-border, border:w-border]
     img2 = img2[border:h-border, border:w-border]
 
+    if img1.ndim == 2:
+        return ssim(img1, img2)
+    elif img1.ndim == 3:
+        if img1.shape[2] == 3:
+            ssims = []
+            for i in range(3):
+                ssims.append(ssim(img1[:,:,i], img2[:,:,i]))
+            return np.array(ssims).mean()
+        elif img1.shape[2] == 1:
+            return ssim(np.squeeze(img1), np.squeeze(img2))
+    else:
+        raise ValueError('Wrong input image dimensions.')
+
 # --------------------------------------------
 # DISTS - Deep Image Structure and Texture Similarity
 # --------------------------------------------
@@ -674,18 +687,23 @@ def calculate_dists(img1, img2, border=0):
     from utils.utils_dists import calculate_dists as dists_fn
     return dists_fn(img1, img2)
 
-    if img1.ndim == 2:
-        return ssim(img1, img2)
-    elif img1.ndim == 3:
-        if img1.shape[2] == 3:
-            ssims = []
-            for i in range(3):
-                ssims.append(ssim(img1[:,:,i], img2[:,:,i]))
-            return np.array(ssims).mean()
-        elif img1.shape[2] == 1:
-            return ssim(np.squeeze(img1), np.squeeze(img2))
-    else:
-        raise ValueError('Wrong input image dimensions.')
+# --------------------------------------------
+# LPIPS - Learned Perceptual Image Patch Similarity
+# --------------------------------------------
+def calculate_lpips(img1, img2, border=0, net='alex'):
+    '''calculate LPIPS (Learned Perceptual Image Patch Similarity)
+    img1, img2: [0, 255]
+    net: 'alex' (default) | 'vgg' | 'squeeze' - backbone network
+    return: LPIPS score (lower is better)
+    '''
+    if not img1.shape == img2.shape:
+        raise ValueError('Input images must have the same dimensions.')
+    h, w = img1.shape[:2]
+    img1 = img1[border:h-border, border:w-border]
+    img2 = img2[border:h-border, border:w-border]
+    
+    from utils.utils_lpips import calculate_lpips as lpips_fn
+    return lpips_fn(img1, img2, net=net)
 
 
 def ssim(img1, img2):

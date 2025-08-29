@@ -206,6 +206,7 @@ def main(json_path='options/train_drunet.json'):
 
                 avg_psnr = 0.0
                 avg_dists = 0.0
+                avg_lpips = 0.0
                 idx = 0
 
                 for test_data in test_loader:
@@ -242,19 +243,30 @@ def main(json_path='options/train_drunet.json'):
                     except Exception as e:
                         logger.info(f"Error calculating DISTS: {e}")
                         current_dists = 1.0  # Worst DISTS score
+                    
+                    # -----------------------
+                    # calculate LPIPS
+                    # -----------------------
+                    try:
+                        current_lpips = util.calculate_lpips(E_img, H_img, border=border, net='alex')
+                    except Exception as e:
+                        logger.info(f"Error calculating LPIPS: {e}")
+                        current_lpips = 1.0  # Worst LPIPS score
                         
-                    logger.info('{:->4d}--> {:>10s} | PSNR: {:<4.2f}dB | DISTS: {:<4.4f}'.format(
-                        idx, image_name_ext, current_psnr, current_dists))
+                    logger.info('{:->4d}--> {:>10s} | PSNR: {:<4.2f}dB | DISTS: {:<4.4f} | LPIPS: {:<4.4f}'.format(
+                        idx, image_name_ext, current_psnr, current_dists, current_lpips))
 
                     avg_psnr += current_psnr
                     avg_dists += current_dists
+                    avg_lpips += current_lpips
 
                 avg_psnr = avg_psnr / idx
                 avg_dists = avg_dists / idx
+                avg_lpips = avg_lpips / idx
 
                 # testing log
-                logger.info('<epoch:{:3d}, iter:{:8,d}, Average PSNR: {:<.2f}dB, Average DISTS: {:<.4f}\n'.format(
-                    epoch, current_step, avg_psnr, avg_dists))
+                logger.info('<epoch:{:3d}, iter:{:8,d}, Average PSNR: {:<.2f}dB, Average DISTS: {:<.4f}, Average LPIPS: {:<.4f}\n'.format(
+                    epoch, current_step, avg_psnr, avg_dists, avg_lpips))
 
 if __name__ == '__main__':
     main()
